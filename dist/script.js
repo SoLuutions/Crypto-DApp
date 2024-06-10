@@ -1,3 +1,4 @@
+document.body.requestFullscreen();
 document.addEventListener('DOMContentLoaded', function() {
     const apiUrl = 'https://api.coingecko.com/api/v3/search/trending';
     const statementBody = document.getElementById('statement-body');
