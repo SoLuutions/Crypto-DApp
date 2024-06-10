@@ -1,8 +1,8 @@
 {
   "name": "Quantum Bytes Trending Coins",
   "short_name": "Trending Coins",
-  "start_url": "/",
-  "display": "fullscreen",
+  "start_url": "index.html?fullscreen=true",
+  "display": "fullscreen"
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "icons": [
