@@ -7,24 +7,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const graphModal = document.getElementById('graph-modal');
     const graphModalImg = document.getElementById('graph-modal-img');
     const closeGraphModal = document.querySelector('.close-graph-modal');
-    // Add event listener for install button click
-    document.getElementById('installButton').addEventListener('click', function() {
-        showInstallPrompt();
-    });
+    const installButton = document.getElementById('installButton');
 
-    function showInstallPrompt() {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then(function(choiceResult) {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                } else {
-                    console.log('User dismissed the install prompt');
-                }
-                deferredPrompt = null;
-            });
-        }
+    if (installButton) {
+        installButton.addEventListener('click', function() {
+            showInstallPrompt();
+        });
     }
+
     fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
@@ -169,36 +159,48 @@ document.addEventListener('DOMContentLoaded', function() {
             graphModal.style.display = 'none';
         }
     });
-});
-// Register service worker
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/service-worker.js')
-            .then(function(registration) {
-                console.log('Service Worker registered:', registration);
-            })
-            .catch(function(error) {
-                console.log('Service Worker registration failed:', error);
-            });
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(function(registration) {
+                    console.log('Service Worker registered:', registration);
+                })
+                .catch(function(error) {
+                    console.log('Service Worker registration failed:', error);
+                });
+        });
+    }
+
+    let deferredPrompt;
+
+    window.addEventListener('beforeinstallprompt', function(event) {
+        event.preventDefault();
+        deferredPrompt = event;
+        installButton.style.display = 'block';
     });
-}
 
-let deferredPrompt;
-
-// Event listener for beforeinstallprompt
-window.addEventListener('beforeinstallprompt', function(event) {
-    event.preventDefault();
-    deferredPrompt = event;
-    showInstallPrompt();
-});
-
-// Function to toggle full screen
-function toggleFullScreen() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-    } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
+    function showInstallPrompt() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(function(choiceResult) {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+            });
         }
     }
-}
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+});
