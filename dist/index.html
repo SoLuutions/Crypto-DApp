@@ -1,16 +1,13 @@
 <!DOCTYPE html>
 <html lang="en" >
-<body>
+
 <head>
     <meta charset="UTF-8">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quantum Bytes Trending Coins</title>
-    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
-    <link rel="manifest" href="/manifest.json">
-    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans'><link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
+    <body>
 <table>
         <caption>Trending Coins</caption>
         <thead>
@@ -33,11 +30,10 @@
             </div>
         </div>
     </div>
-    <div id="graph-modal" class="graph-modal">
-        <span class="close-graph-modal">&times;</span>
-        <img class="graph-modal-content" id="graph-modal-img">
-    </div>
-
+<div id="graph-modal" class="graph-modal">
+    <span class="close-graph-modal">&times;</span>
+    <img class="graph-modal-content" id="graph-modal-img">
+</div>
   <script  src="./script.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
