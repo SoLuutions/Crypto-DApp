@@ -38,9 +38,9 @@ table tr {
 
 table th,
 table td {
-  padding: .625em 1em; /* Updated padding */
+  padding: .625em 1em;
   text-align: center;
-  box-sizing: border-box; /* Ensures padding is included in the width */
+  box-sizing: border-box;
 }
 
 table th {
@@ -148,9 +148,9 @@ table tr:hover {
 }
 
 .custom-model-inner {
-  display: flex; /* Adjusted */
-  flex-direction: column; /* Adjusted */
-  align-items: center; /* Adjusted */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -161,8 +161,8 @@ table tr:hover {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
   min-width: 230px;
   max-width: 500px;
-  overflow-y: auto; /* Adjusted */
-  max-height: 80vh; /* Adjusted */
+  overflow-y: auto;
+  max-height: 80vh;
 }
 
 .close-btn {
@@ -181,4 +181,42 @@ table tr:hover {
 
 .no-highlight:hover {
   background-color: #ffffff; 
+}
+.graph-modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0; 
+    top: 0; 
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0, 0, 0, 0.9);
+}
+
+.graph-modal-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.close-graph-modal {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.close-graph-modal:hover,
+.close-graph-modal:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
 }
