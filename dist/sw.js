@@ -5,6 +5,8 @@ const urlsToCache = [
   '/index.html',
   '/style.css',
   '/script.js',
+  '/marquee_style.css',
+  '/marquee_script.js',
   '/images/icon-192x192.png',
   '/images/icon-512x512.png'
 ];
