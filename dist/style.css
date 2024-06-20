@@ -2,16 +2,16 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: "Exo", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
 }
 body {
     height: 100vh;
     overflow-x: hidden;
     position: relative; 
-    font-family: 'Exo', sans-serif;
 }
-table, .Marquee, .Marquee-tag, .custom-model-main, .custom-model-inner, .graph-modal {
-    font-family: 'Exo', sans-serif;
-}
+
 table {
     border-collapse: collapse;
     width: 100%;
