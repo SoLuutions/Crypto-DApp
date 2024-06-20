@@ -4,7 +4,7 @@
     box-sizing: border-box;
 }
 
-body {
+.exo-body {
     font-family: 'Exo', sans-serif;
     height: 100vh;
     overflow-x: hidden;
