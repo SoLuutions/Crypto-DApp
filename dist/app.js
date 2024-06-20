@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <tr class="no-highlight">
                                         <td colspan="2" style="text-align: center;">
                                             <img src="${detailData.image.large}" alt="${detailData.name}" style="width: 90px; height: auto;" />
-                                            <br><h2>${detailData.name} (${detailData.symbol.toUpperCase()})</h2>
+                                            <h2>${detailData.name} (${detailData.symbol.toUpperCase()})</h2>
                                         </td>
                                     </tr>
                                     <tr class="no-highlight">
