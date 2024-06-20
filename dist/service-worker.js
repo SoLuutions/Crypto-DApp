@@ -3,9 +3,13 @@
 const CACHE_NAME = 'crypto-d-cache-v1';
 const urlsToCache = [
   '/',
-  '/styles.css',
+  '/index.html',
+  '/style.css',
   '/script.js',
-  '/index.html'
+  '/marquee_style.css',
+  '/marquee_script.js',
+  '/images/icon-192x192.png',
+  '/images/icon-512x512.png'
 ];
 
 self.addEventListener('install', event => {
