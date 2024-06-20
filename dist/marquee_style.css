@@ -17,7 +17,10 @@
   -webkit-align-items: center;
   align-items: center;
   overflow: hidden;
-  position: sticky;
+  position: sticky; /* Make the marquee sticky */
+  top: 0; /* Stick it to the top */
+  background: rgba(255, 255, 255, 0.9); /* Optional: Give it a background to make it stand out */
+  z-index: 1000; /* Ensure it stays on top of other elements */
 }
 .Marquee-content {
   display: -webkit-box;
