@@ -9,7 +9,9 @@ body {
     position: relative; 
     font-family: 'Exo', sans-serif;
 }
-
+table, .Marquee, .Marquee-tag, .custom-model-main, .custom-model-inner, .graph-modal {
+    font-family: 'Exo', sans-serif;
+}
 table {
     border-collapse: collapse;
     width: 100%;
