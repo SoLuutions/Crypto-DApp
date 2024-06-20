@@ -3,12 +3,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quantum Bytes Trending Coins</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./marquee_style.css">
     <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Exo:ital,wght@0,100..900;1,100..900&display=swap');
+    </style>
 </head>
 <body>
+<div class="Marquee">
+    <div class="Marquee-content">
+        <div class="Marquee-tag">
+            <img src="https://coin-images.coingecko.com/coins/images/1/small/bitcoin.png?1696501400" width="30px" height="30px">
+            &nbsp;Bitcoin <span class='coinid'>&nbsp;BTC</span>&nbsp;<span class='pricechangeBTC'></span>
+        </div>
+        <div class="Marquee-tag">
+            <img src="https://coin-images.coingecko.com/coins/images/279/thumb/ethereum.png?1696501628" width="30px" height="30px">
+            &nbsp;Ethereum <span class='coinid'> &nbsp;ETH</span>&nbsp;<span class='pricechangeETH'></span>
+        </div>
+        <div class="Marquee-tag">
+            <img src="https://coin-images.coingecko.com/coins/images/325/thumb/Tether.png?1696501661" width="30px" height="30px"> 
+            &nbsp;Tether <span class='coinid'> &nbsp;USDT</span>&nbsp;<span class='pricechangeUSDT'></span>
+        </div>
+        <div class="Marquee-tag">
+            <img src="https://coin-images.coingecko.com/coins/images/825/thumb/bnb-icon2_2x.png?1696501970" width="30px" height="30px">
+            &nbsp;BNB <span class='coinid'> &nbsp;BNB</span>&nbsp;<span class='pricechangeBNB'></span>
+        </div>
+        <div class="Marquee-tag">
+            <img src="https://coin-images.coingecko.com/coins/images/4128/thumb/solana.png?1718769756" width="30px" height="30px">
+            &nbsp;Solana <span class='coinid'> &nbsp;SOL</span>&nbsp;<span class='pricechangeSOL'></span>
+        </div>
+        <div class="Marquee-tag">
+            <img src="https://coin-images.coingecko.com/coins/images/5/thumb/dogecoin.png?1696501409" width="30px" height="30px">
+            &nbsp;Dogecoin <span class='coinid'> &nbsp;DOGE</span>&nbsp;<span class='pricechangeDOGE'></span>
+        </div>
+        <!-- below this are repeats -->
+        <div class="Marquee-tag">
+            <img src="https://coin-images.coingecko.com/coins/images/1/small/bitcoin.png?1696501400" width="30px" height="30px">
+            &nbsp;Bitcoin <span class='coinid'>&nbsp;BTC</span>&nbsp;<span class='pricechangeBTC'></span>
+        </div>
+        <div class="Marquee-tag">
+            <img src="https://coin-images.coingecko.com/coins/images/279/thumb/ethereum.png?1696501628" width="30px" height="30px">
+            &nbsp;Ethereum <span class='coinid'> &nbsp;ETH</span>&nbsp;<span class='pricechangeETH'></span>
+        </div>
+        <div class="Marquee-tag">
+            <img src="https://coin-images.coingecko.com/coins/images/325/thumb/Tether.png?1696501661" width="30px" height="30px"> 
+            &nbsp;Tether <span class='coinid'> &nbsp;USDT</span>&nbsp;<span class='pricechangeUSDT'></span>
+        </div>
+        <div class="Marquee-tag">
+            <img src="https://coin-images.coingecko.com/coins/images/825/thumb/bnb-icon2_2x.png?1696501970" width="30px" height="30px">
+            &nbsp;BNB <span class='coinid'> &nbsp;BNB</span>&nbsp;<span class='pricechangeBNB'></span>
+        </div>
+    </div>
+</div>    
 <button id="installButton" style="display:none;">Install App</button>
     <div class="area">
         <ul class="circles">
@@ -51,4 +104,5 @@
     <img class="graph-modal-content" id="graph-modal-img">
 </div>
 <script  src="./app.js"></script>
+<script  src="./marquee_style.js"></script>    
 </body>
