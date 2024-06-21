@@ -217,12 +217,6 @@ function updatePopupContent(coinDetails) {
             </tr>
         </table>
     `;
-
-    const sparklineImg = document.getElementById('sparkline-img');
-    sparklineImg.addEventListener('click', function() {
-        graphModal.style.display = 'block';
-        graphModalImg.src = sparklineImg.src;
-    });
 }
 
     function getChangeClass(change) {
