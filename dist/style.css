@@ -126,7 +126,9 @@ table tr:last-child td:last-child {
     background-color: rgba(0, 0, 0, 0.6);
     z-index: 999;
 }
-
+#popup-content b {
+    font-weight: bold !important;
+}
 .custom-model-inner {
     display: flex;
     flex-direction: column;
