@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const apiUrl = 'https://api.coingecko.com/api/v3/search/trending';
+    const apiUrl1 = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&page=1&per_page=100&sparkline=true';
+    const apiUrl2 = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&page=2&per_page=100&sparkline=true';
     const statementBody = document.getElementById('statement-body');
     const popup = document.getElementById('popup');
     const popupContent = document.getElementById('popup-content');
@@ -7,199 +8,246 @@ document.addEventListener('DOMContentLoaded', function() {
     const graphModal = document.getElementById('graph-modal');
     const graphModalImg = document.getElementById('graph-modal-img');
     const closeGraphModal = document.querySelector('.close-graph-modal');
-    const installButton = document.getElementById('installButton');
+    const categorySelect = document.getElementById('category-select');
 
-    if (installButton) {
-        installButton.addEventListener('click', function() {
-            showInstallPrompt();
-        });
-    }
+    let allCoins = [];
+    let topByMarketCap = [];
+    let topGainers = [];
+    let topLosers = [];
+    let newListings = [];
+    let coinDetailsCache = {};
+    let lastApiCallTime = 0;
+    const API_CALL_LIMIT = 20;
+    const API_CALL_INTERVAL = 60000; // 1 minute in milliseconds
 
-    fetch(apiUrl)
-        .then(response => response.json())
+    Promise.all([fetch(apiUrl1), fetch(apiUrl2)])
+        .then(responses => Promise.all(responses.map(res => res.json())))
         .then(data => {
-            const coins = data.coins.slice(0, 5).map(coin => coin.item);
-            coins.forEach(coin => {
-                const newRow = document.createElement('tr');
-                const roundedPrice = Math.round(coin.data.price * 1000000) / 1000000;
-                const roundedChange = Math.round(coin.data.price_change_percentage_24h.usd * 1000) / 1000;
-                let changeClass;
-                if (roundedChange > 1.5) {
-                    changeClass = 'green';
-                } else if (roundedChange >= -1.5 && roundedChange <= 1.5) {
-                    changeClass = 'yellow';
-                } else {
-                    changeClass = 'red';
-                }
-                newRow.innerHTML = `
-                    <td data-label="Name">${coin.name} (${coin.id})</td>
-                    <td data-label="Price">$${roundedPrice}</td>
-                    <td data-label="Price Change 24h" class="${changeClass}">${roundedChange}%</td>
-                    <td data-label="Market Cap">${coin.data.market_cap} </td>
-                    <td data-label="Total Volume">${coin.data.total_volume}</td>
-                `;
-                newRow.addEventListener('click', function() {
-                    const coinDetailUrl = `https://api.coingecko.com/api/v3/coins/${coin.id}`;
-                    fetch(coinDetailUrl)
-                        .then(response => response.json())
-                        .then(detailData => {
-                            const roundedDetailPrice = Math.round(detailData.market_data.current_price.usd * 1000000) / 1000000;
-                            const roundedAth = Math.round(detailData.market_data.ath.usd * 1000000) / 1000000;
-                            const roundedAtl = Math.round(detailData.market_data.atl.usd * 1000000) / 1000000;
-                            const athDate = new Date(detailData.market_data.ath_date.usd).toLocaleDateString();
-                            const atlDate = new Date(detailData.market_data.atl_date.usd).toLocaleDateString();
-                            const detailChange24h = detailData.market_data.price_change_percentage_24h.toFixed(2);
-                            const detailChange7d = detailData.market_data.price_change_percentage_7d.toFixed(2);
-                            const detailChange30d = detailData.market_data.price_change_percentage_30d.toFixed(2);
-                            const detailChange1y = detailData.market_data.price_change_percentage_1y.toFixed(2);
-                            const getChangeClass = (change) => {
-                                if (change > 1.5) return 'green';
-                                if (change >= -1.5 && change <= 1.5) return 'yellow';
-                                return 'red';
-                            };
-                            popupContent.innerHTML = `
-                                <table>
-                                    <tr class="no-highlight">
-                                        <td colspan="2" style="text-align: center;">
-                                            <img src="${detailData.image.large}" alt="${detailData.name}" style="width: 90px; height: auto;" />
-                                            <h2>${detailData.name} (${detailData.symbol.toUpperCase()})</h2>
-                                        </td>
-                                    </tr>
-                                    <tr class="no-highlight">
-                                        <td>Current Price:</td>
-                                        <td><b>$${roundedDetailPrice}</b></td>
-                                    </tr>
-                                    <tr class="no-highlight">
-                                        <td>Rank:</td>
-                                        <td><b>${detailData.market_cap_rank}</b></td>
-                                    </tr>
-                                    <tr class="no-highlight">
-                                        <td>All-Time High:</td>
-                                        <td><b>$${roundedAth}</b> (on ${athDate})</td>
-                                    </tr>
-                                    <tr class="no-highlight">
-                                        <td>All-Time Low:</td>
-                                        <td><b>$${roundedAtl}</b> (on ${atlDate})</td>
-                                    </tr>
-                                    <tr class="no-highlight">
-                                        <td>24h Price Change:</td>
-                                        <td class="${getChangeClass(detailChange24h)}"><b>${detailChange24h}%</b></td>
-                                    </tr>
-                                    <tr class="no-highlight">
-                                        <td>7d Price Change:</td>
-                                        <td class="${getChangeClass(detailChange7d)}"><b>${detailChange7d}%</b></td>
-                                    </tr>
-                                    <tr class="no-highlight">
-                                        <td>30d Price Change:</td>
-                                        <td class="${getChangeClass(detailChange30d)}"><b>${detailChange30d}%</b></td>
-                                    </tr>
-                                    <tr class="no-highlight">
-                                        <td>1y Price Change:</td>
-                                        <td class="${getChangeClass(detailChange1y)}"><b>${detailChange1y}%</b></td>
-                                    </tr>                                    
-                                    <tr class="no-highlight">
-                                        <td>Market Cap:</td>
-                                        <td><b>$${detailData.market_data.market_cap.usd.toLocaleString()}</b></td>
-                                    </tr>
-                                    <tr class="no-highlight">
-                                        <td>Total Volume:</td>
-                                        <td><b>$${detailData.market_data.total_volume.usd.toLocaleString()}</b></td>
-                                    </tr>
-                                    <tr class="no-highlight">
-                                        <td>Max Supply:</td>
-                                        <td><b>${detailData.market_data.max_supply}</b></td>
-                                    </tr> 
-                                    <tr class="no-highlight">
-                                        <td>Circulating Supply:</td>
-                                        <td><b>${detailData.market_data.circulating_supply.toFixed(2)}</b></td>
-                                    </tr>                                    
-                                    <tr class="no-highlight">
-                                        <td>Official Website:</td>
-                                        <td><a href="${detailData.links.homepage[0]}" target="_blank">${detailData.links.homepage[0]}</a></td>
-                                    </tr>
-                                    <tr class="no-highlight">
-                                        <td>X(Twitter):</td>
-                                        <td><a href="https://x.com/${detailData.links.twitter_screen_name}" target="_blank">@${detailData.links.twitter_screen_name}</a></td>
-                                    </tr>
-                                    <tr>
-                                     <tr>
-                                        <td colspan="2">
-                                            <img id="sparkline-img" src="${coin.data.sparkline}" alt="Sparkline" style="width: 100%; height: auto; cursor: pointer;" />
-                                        </td>
-                                    </tr>
-                                </table>
-                            `;
-                            popupOverlay.style.display = 'block';
-                            const sparklineImg = document.getElementById('sparkline-img');
-                            sparklineImg.addEventListener('click', function() {
-                                graphModal.style.display = 'block';
-                                graphModalImg.src = sparklineImg.src;
-                            });
-                        })
-                        .catch(error => console.error('Error fetching detailed data:', error));
-                });
-                statementBody.appendChild(newRow);
-            });
+            allCoins = [...data[0], ...data[1]];
+            topByMarketCap = allCoins.sort((a, b) => b.market_cap - a.market_cap).slice(0, 5);
+            topGainers = allCoins.sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0, 5);
+            topLosers = allCoins.sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0, 5);
+            newListings = allCoins.sort((a, b) => new Date(b.atl_date) - new Date(a.atl_date)).slice(0, 5);
+
+            displayCoins(topByMarketCap);
         })
         .catch(error => console.error('Error fetching data:', error));
+
+    categorySelect.addEventListener('change', function() {
+        switch(this.value) {
+            case 'market-cap':
+                displayCoins(topByMarketCap);
+                break;
+            case 'gainers':
+                displayCoins(topGainers);
+                break;
+            case 'losers':
+                displayCoins(topLosers);
+                break;
+            case 'new-listings':
+                displayCoins(newListings);
+                break;
+        }
+    });
+
+function displayCoins(coins) {
+    statementBody.innerHTML = '';
+    coins.forEach(coin => {
+        const newRow = document.createElement('tr');
+        const roundedPrice = Math.round(coin.current_price * 1000000) / 1000000;
+        const roundedChange = Math.round(coin.price_change_percentage_24h * 1000) / 1000;
+        let changeClass = getChangeClass(roundedChange);
+
+        const originalPrice = roundedPrice / (1 + (coin.price_change_percentage_24h / 100));
+        const moneyChange = roundedPrice - originalPrice;
+        const moneyChangeRounded = Math.round(moneyChange * 1000000) / 1000000;
+
+        newRow.innerHTML = `
+            <td data-label="Name">${coin.name} (${coin.symbol.toUpperCase()})</td>
+            <td data-label="Price">$${roundedPrice}</td>
+            <td data-label="Price Change 24h" class="${changeClass}">
+                ${roundedChange}% ($${moneyChangeRounded.toLocaleString()})
+            </td>
+            <td data-label="Market Cap">$${coin.market_cap.toLocaleString()}</td>
+            <td data-label="Total Volume">$${coin.total_volume.toLocaleString()}</td>
+        `;
+
+        newRow.addEventListener('click', function() {
+            showCoinDetails(coin.id);
+        });
+
+        statementBody.appendChild(newRow);
+    });
+}
+
+    async function showCoinDetails(coinId) {
+        popupOverlay.style.display = 'block';
+        popupContent.innerHTML = 'Loading...';
+
+        try {
+            const coinDetails = await getCoinDetails(coinId);
+            updatePopupContent(coinDetails);
+        } catch (error) {
+            console.error('Error fetching coin details:', error);
+            popupContent.innerHTML = 'Error loading coin details. Please try again.';
+        }
+    }
+
+    async function getCoinDetails(coinId) {
+        if (coinDetailsCache[coinId]) {
+            return coinDetailsCache[coinId];
+        }
+
+        await checkAndDelayApiCall();
+
+        const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}`);
+        const data = await response.json();
+
+        coinDetailsCache[coinId] = data;
+        return data;
+    }
+
+    async function checkAndDelayApiCall() {
+        const now = Date.now();
+        if (now - lastApiCallTime < API_CALL_INTERVAL && Object.keys(coinDetailsCache).length >= API_CALL_LIMIT) {
+            const delay = API_CALL_INTERVAL - (now - lastApiCallTime);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        lastApiCallTime = Date.now();
+    }
+
+function updatePopupContent(coinDetails) {
+    const getChangeClass = (change) => {
+        if (change > 1.5) return 'green';
+        if (change >= -1.5 && change <= 1.5) return 'yellow';
+        return 'red';
+    };
+
+    const originalPrice24h = coinDetails.market_data.current_price.usd / (1 + (coinDetails.market_data.price_change_percentage_24h / 100));
+    const moneyChange24h = coinDetails.market_data.current_price.usd - originalPrice24h;
+    const moneyChange24hRounded = moneyChange24h.toFixed(5);
+
+    const originalPrice7d = coinDetails.market_data.current_price.usd / (1 + (coinDetails.market_data.price_change_percentage_7d / 100));
+    const moneyChange7d = coinDetails.market_data.current_price.usd - originalPrice7d;
+    const moneyChange7dRounded = moneyChange7d.toFixed(5);
+
+    const originalPrice30d = coinDetails.market_data.current_price.usd / (1 + (coinDetails.market_data.price_change_percentage_30d / 100));
+    const moneyChange30d = coinDetails.market_data.current_price.usd - originalPrice30d;
+    const moneyChange30dRounded = moneyChange30d.toFixed(5);
+
+    const originalPrice1y = coinDetails.market_data.current_price.usd / (1 + (coinDetails.market_data.price_change_percentage_1y / 100));
+    const moneyChange1y = coinDetails.market_data.current_price.usd - originalPrice1y;
+    const moneyChange1yRounded = moneyChange1y.toFixed(5);
+
+    popupContent.innerHTML = `
+        <table>
+            <tr class="no-highlight">
+                <td colspan="2" style="text-align: center;">
+                    <img src="${coinDetails.image.large}" alt="${coinDetails.name}" style="width: 90px; height: auto;" />
+                    <h2>${coinDetails.name} (${coinDetails.symbol.toUpperCase()})</h2>
+                </td>
+            </tr>
+            <tr class="no-highlight">
+                <td>Current Price:</td>
+                <td><b>$${coinDetails.market_data.current_price.usd}</b></td>
+            </tr>
+            <tr class="no-highlight">
+                <td>Rank:</td>
+                <td><b>${coinDetails.market_cap_rank}</b></td>
+            </tr>
+            <tr class="no-highlight">
+                <td>All-Time High:</td>
+                <td><b>$${coinDetails.market_data.ath.usd}</b> (on ${new Date(coinDetails.market_data.ath_date.usd).toLocaleDateString()})</td>
+            </tr>
+            <tr class="no-highlight">
+                <td>All-Time Low:</td>
+                <td><b>$${coinDetails.market_data.atl.usd}</b> (on ${new Date(coinDetails.market_data.atl_date.usd).toLocaleDateString()})</td>
+            </tr>
+            <tr class="no-highlight">
+                <td>24h Price Change:</td>
+                <td class="${getChangeClass(coinDetails.market_data.price_change_percentage_24h)}">
+                    <b>${coinDetails.market_data.price_change_percentage_24h.toFixed(2)}%</b> 
+                    ($${moneyChange24hRounded})
+                </td>
+            </tr>
+            <tr class="no-highlight">
+                <td>7d Price Change:</td>
+                <td class="${getChangeClass(coinDetails.market_data.price_change_percentage_7d)}">
+                    <b>${coinDetails.market_data.price_change_percentage_7d.toFixed(2)}%</b> 
+                    ($${moneyChange7dRounded})
+                </td>
+            </tr>
+            <tr class="no-highlight">
+                <td>30d Price Change:</td>
+                <td class="${getChangeClass(coinDetails.market_data.price_change_percentage_30d)}">
+                    <b>${coinDetails.market_data.price_change_percentage_30d.toFixed(2)}%</b> 
+                    ($${moneyChange30dRounded})
+                </td>
+            </tr>
+            <tr class="no-highlight">
+                <td>1y Price Change:</td>
+                <td class="${getChangeClass(coinDetails.market_data.price_change_percentage_1y)}">
+                    <b>${coinDetails.market_data.price_change_percentage_1y.toFixed(2)}%</b> 
+                    ($${moneyChange1yRounded})
+                </td>
+            </tr>
+            <tr class="no-highlight">
+                <td>Market Cap:</td>
+                <td><b>$${coinDetails.market_data.market_cap.usd.toLocaleString()}</b></td>
+            </tr>
+            <tr class="no-highlight">
+                <td>Total Volume:</td>
+                <td><b>$${coinDetails.market_data.total_volume.usd.toLocaleString()}</b></td>
+            </tr>
+            <tr class="no-highlight">
+                <td>Max Supply:</td>
+                <td><b>${coinDetails.market_data.max_supply ? coinDetails.market_data.max_supply.toLocaleString() : 'N/A'}</b></td>
+            </tr> 
+            <tr class="no-highlight">
+                <td>Circulating Supply:</td>
+                <td><b>${coinDetails.market_data.circulating_supply.toFixed(2)}</b></td>
+            </tr>
+            <tr class="no-highlight">
+                <td>Official Website:</td>
+                <td><a href="${coinDetails.links.homepage[0]}" target="_blank">${coinDetails.links.homepage[0]}</a></td>
+            </tr>
+            <tr class="no-highlight">
+                <td>X(Twitter):</td>
+                <td><a href="https://x.com/${coinDetails.links.twitter_screen_name}" target="_blank">@${coinDetails.links.twitter_screen_name}</a></td>
+            </tr>
+        </table>
+    `;
+
+    const sparklineImg = document.getElementById('sparkline-img');
+    sparklineImg.addEventListener('click', function() {
+        graphModal.style.display = 'block';
+        graphModalImg.src = sparklineImg.src;
+    });
+}
+
+    function getChangeClass(change) {
+        if (change > 1.5) return 'green';
+        if (change >= -1.5 && change <= 1.5) return 'yellow';
+        return 'red';
+    }
 
     document.getElementById('popup-close-btn').addEventListener('click', function() {
         popupOverlay.style.display = 'none';
     });
+
     popupOverlay.addEventListener('click', function(event) {
         if (event.target === popupOverlay) {
             popupOverlay.style.display = 'none';
         }
     });
+
     closeGraphModal.addEventListener('click', function() {
         graphModal.style.display = 'none';
     });
+
     graphModal.addEventListener('click', function(event) {
         if (event.target === graphModal) {
             graphModal.style.display = 'none';
         }
     });
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/service-worker.js')
-            .then(function(registration) {
-                console.log('Service Worker registered:', registration);
-            })
-            .catch(function(error) {
-                console.log('Service Worker registration failed:', error);
-            });
-    });
-}
-    let deferredPrompt;
-
-    window.addEventListener('beforeinstallprompt', function(event) {
-        event.preventDefault();
-        deferredPrompt = event;
-        installButton.style.display = 'block';
-    });
-
-    function showInstallPrompt() {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then(function(choiceResult) {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                } else {
-                    console.log('User dismissed the install prompt');
-                }
-                deferredPrompt = null;
-            });
-        }
-    }
-
-    function toggleFullScreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
-        }
-    }
 });
