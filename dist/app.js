@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const apiUrl1 = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&page=1&per_page=100&sparkline=true';
-    const apiUrl2 = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&page=2&per_page=100&sparkline=true';
+    const apiUrl = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false';
     const statementBody = document.getElementById('statement-body');
     const popup = document.getElementById('popup');
     const popupContent = document.getElementById('popup-content');
@@ -11,74 +10,81 @@ document.addEventListener('DOMContentLoaded', function() {
     const categorySelect = document.getElementById('category-select');
 
     let allCoins = [];
-    let topByMarketCap = [];
-    let topGainers = [];
-    let topLosers = [];
-    let newListings = [];
     let coinDetailsCache = {};
     let lastApiCallTime = 0;
-    const API_CALL_LIMIT = 20;
+    const API_CALL_LIMIT = 10; // Reduced from 20 to be more conservative
     const API_CALL_INTERVAL = 60000; // 1 minute in milliseconds
 
-    Promise.all([fetch(apiUrl1), fetch(apiUrl2)])
-        .then(responses => Promise.all(responses.map(res => res.json())))
-        .then(data => {
-            allCoins = [...data[0], ...data[1]];
-            topByMarketCap = allCoins.sort((a, b) => b.market_cap - a.market_cap).slice(0, 5);
-            topGainers = allCoins.sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0, 5);
-            topLosers = allCoins.sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0, 5);
-            newListings = allCoins.sort((a, b) => new Date(b.atl_date) - new Date(a.atl_date)).slice(0, 5);
+    // Fetch data only once and store it
+    fetchData();
 
-            displayCoins(topByMarketCap);
-        })
-        .catch(error => console.error('Error fetching data:', error));
+    async function fetchData() {
+        try {
+            const response = await fetch(apiUrl);
+            allCoins = await response.json();
+            processCoins();
+            displayCoins(getCoinsByCategory('market-cap'));
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            statementBody.innerHTML = '<tr><td colspan="5">Failed to load data. Please try again later.</td></tr>';
+        }
+    }
+
+    function processCoins() {
+        allCoins.forEach(coin => {
+            coin.category = getCoinCategory(coin);
+        });
+    }
+
+    function getCoinCategory(coin) {
+        const priceChange = coin.price_change_percentage_24h;
+        if (priceChange > 5) return 'gainers';
+        if (priceChange < -5) return 'losers';
+        // Determine if it's a new listing (you might need to adjust this logic)
+        if (new Date(coin.atl_date).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000) return 'new-listings';
+        return 'others';
+    }
+
+    function getCoinsByCategory(category) {
+        if (category === 'market-cap') {
+            return allCoins.slice(0, 5);
+        }
+        return allCoins.filter(coin => coin.category === category).slice(0, 5);
+    }
 
     categorySelect.addEventListener('change', function() {
-        switch(this.value) {
-            case 'market-cap':
-                displayCoins(topByMarketCap);
-                break;
-            case 'gainers':
-                displayCoins(topGainers);
-                break;
-            case 'losers':
-                displayCoins(topLosers);
-                break;
-            case 'new-listings':
-                displayCoins(newListings);
-                break;
-        }
+        displayCoins(getCoinsByCategory(this.value));
     });
 
-function displayCoins(coins) {
-    statementBody.innerHTML = '';
-    coins.forEach(coin => {
-        const newRow = document.createElement('tr');
-        const roundedPrice = Math.round(coin.current_price * 1000000) / 1000000;
-        const roundedChange = Math.round(coin.price_change_percentage_24h * 1000) / 1000;
-        let changeClass = getChangeClass(roundedChange);
+    function displayCoins(coins) {
+        statementBody.innerHTML = '';
+        coins.forEach(coin => {
+            const newRow = document.createElement('tr');
+            const roundedPrice = Math.round(coin.current_price * 1000000) / 1000000;
+            const roundedChange = Math.round(coin.price_change_percentage_24h * 1000) / 1000;
+            let changeClass = getChangeClass(roundedChange);
 
-        const originalPrice = roundedPrice / (1 + (coin.price_change_percentage_24h / 100));
-        const moneyChange = roundedPrice - originalPrice;
-        const moneyChangeRounded = Math.round(moneyChange * 1000000) / 1000000;
+            const originalPrice = roundedPrice / (1 + (coin.price_change_percentage_24h / 100));
+            const moneyChange = roundedPrice - originalPrice;
+            const moneyChangeRounded = Math.round(moneyChange * 1000000) / 1000000;
 
-        newRow.innerHTML = `
-            <td data-label="Name">${coin.name} (${coin.symbol.toUpperCase()})</td>
-            <td data-label="Price">$${roundedPrice}</td>
-            <td data-label="Price Change 24h" class="${changeClass}">
-                ${roundedChange}% ($${moneyChangeRounded.toLocaleString()})
-            </td>
-            <td data-label="Market Cap">$${coin.market_cap.toLocaleString()}</td>
-            <td data-label="Total Volume">$${coin.total_volume.toLocaleString()}</td>
-        `;
+            newRow.innerHTML = `
+                <td data-label="Name">${coin.name} (${coin.symbol.toUpperCase()})</td>
+                <td data-label="Price">$${roundedPrice}</td>
+                <td data-label="Price Change 24h" class="${changeClass}">
+                    ${roundedChange}% ($${moneyChangeRounded.toLocaleString()})
+                </td>
+                <td data-label="Market Cap">$${coin.market_cap.toLocaleString()}</td>
+                <td data-label="Total Volume">$${coin.total_volume.toLocaleString()}</td>
+            `;
 
-        newRow.addEventListener('click', function() {
-            showCoinDetails(coin.id);
+            newRow.addEventListener('click', function() {
+                showCoinDetails(coin.id);
+            });
+
+            statementBody.appendChild(newRow);
         });
-
-        statementBody.appendChild(newRow);
-    });
-}
+    }
 
     async function showCoinDetails(coinId) {
         popupOverlay.style.display = 'block';
@@ -100,11 +106,18 @@ function displayCoins(coins) {
 
         await checkAndDelayApiCall();
 
-        const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}`);
-        const data = await response.json();
-
-        coinDetailsCache[coinId] = data;
-        return data;
+        try {
+            const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}`);
+            if (!response.ok) {
+                throw new Error('API request failed');
+            }
+            const data = await response.json();
+            coinDetailsCache[coinId] = data;
+            return data;
+        } catch (error) {
+            console.error('Error fetching coin details:', error);
+            throw error;
+        }
     }
 
     async function checkAndDelayApiCall() {
@@ -219,7 +232,7 @@ function updatePopupContent(coinDetails) {
     `;
 }
 
-    function getChangeClass(change) {
+  function getChangeClass(change) {
         if (change > 1.5) return 'green';
         if (change >= -1.5 && change <= 1.5) return 'yellow';
         return 'red';
