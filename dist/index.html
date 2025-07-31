@@ -1,66 +1,225 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Bytes Trending Coins</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
-    <link rel="stylesheet" href="./style.css">
-    <link rel="manifest" href="manifest.json">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Exo:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js"></script>
+    <title>🔥 Trending Crypto Coins</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading-spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .coin-card {
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .coin-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-gradient {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+    </style>
 </head>
-<body>
-    <div class="area">
-        <ul class="circles">
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-        </ul>
-    </div>
-    <table>
-        <div class="custom-select">
-         <select id="category-select">
-          <option value="market-cap">Top 5 by Market Cap</option>   
-          <option value="gainers">Top 5 Gainers</option>
-          <option value="losers">Top 5 Losers</option>
-          <option value="new-listings">New Listings</option>        
-        </select>
-        <thead>
-            <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Price</th>
-                <th scope="col">Price Change 24h</th>
-                <th scope="col">Market Cap</th>
-                <th scope="col">Total Volume</th>
-            </tr>
-        </thead>
-        <tbody id="statement-body"></tbody>
-    </table>
+<body class="min-h-screen gradient-bg">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-white mb-4">
+                🔥 Trending Crypto Coins
+            </h1>
+            <p class="text-xl text-white/80 mb-6">
+                Real-time trending cryptocurrencies from CoinGecko
+            </p>
+            <button 
+                id="refreshBtn" 
+                class="bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-6 rounded-full backdrop-blur-sm transition-all duration-300 hover:scale-105"
+            >
+                🔄 Refresh Data
+            </button>
+        </div>
 
-    <div id="popup-overlay" class="custom-model-main">
-        <div class="custom-model-inner" id="popup">
-            <div class="custom-model-wrap">
-                <div id="popup-close-btn" class="close-btn">×</div>
-                <div id="popup-content"></div>
+        <!-- Loading State -->
+        <div id="loading" class="flex justify-center items-center">
+            <div class="loading-spinner"></div>
+            <span class="ml-3 text-white text-lg">Loading trending coins...</span>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="hidden">
+            <div class="bg-red-500/20 border border-red-500/50 text-white p-6 rounded-xl text-center backdrop-blur-sm">
+                <h3 class="text-xl font-bold mb-2">⚠️ Error Loading Data</h3>
+                <p id="errorMessage" class="mb-4"></p>
+                <button 
+                    onclick="fetchTrendingCoins()" 
+                    class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors"
+                >
+                    Try Again
+                </button>
             </div>
+        </div>
+
+        <!-- Coins Grid -->
+        <div id="coinsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Cards will be populated here -->
+        </div>
+
+        <!-- Last Updated -->
+        <div class="text-center mt-8">
+            <p id="lastUpdated" class="text-white/60 text-sm"></p>
         </div>
     </div>
 
-    <div id="graph-modal" class="graph-modal">
-        <span class="close-graph-modal">&times;</span>
-        <img class="graph-modal-content" id="graph-modal-img">
-    </div>
-<script  src="./app.js"></script>
+    <script>
+        let coinsData = [];
+
+        // Fetch trending coins from CoinGecko API
+        async function fetchTrendingCoins() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const coinsGrid = document.getElementById('coinsGrid');
+            
+            // Show loading state
+            loading.classList.remove('hidden');
+            error.classList.add('hidden');
+            coinsGrid.innerHTML = '';
+            
+            try {
+                console.log('Fetching trending coins...');
+                
+                const response = await fetch('https://api.coingecko.com/api/v3/search/trending');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('API Response:', data);
+                
+                if (!data.coins || data.coins.length === 0) {
+                    throw new Error('No trending coins found');
+                }
+                
+                coinsData = data.coins;
+                displayCoins(coinsData);
+                updateLastUpdated();
+                
+            } catch (err) {
+                console.error('Error fetching data:', err);
+                showError(err.message);
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        // Display coins as cards
+        function displayCoins(coins) {
+            const coinsGrid = document.getElementById('coinsGrid');
+            
+            coinsGrid.innerHTML = coins.map((coinData, index) => {
+                const coin = coinData.item;
+                
+                return `
+                    <div class="coin-card bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:border-white/40">
+                        <!-- Rank Badge -->
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                #${index + 1} Trending
+                            </div>
+                            <div class="text-white/60 text-sm">
+                                Rank #${coin.market_cap_rank || 'N/A'}
+                            </div>
+                        </div>
+                        
+                        <!-- Coin Info -->
+                        <div class="flex items-center mb-6">
+                            <img 
+                                src="${coin.large || coin.thumb}" 
+                                alt="${coin.name}" 
+                                class="w-16 h-16 rounded-full mr-4 ring-2 ring-white/20"
+                                onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiM2MzY2RjEiLz4KPHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE2IDI4QzIyLjYyNzQgMjggMjggMjIuNjI3NCAyOCAxNkMyOCA5LjM3MjU4IDIyLjYyNzQgNCAxNiA0QzkuMzcyNTggNCA0IDkuMzcyNTggNCAxNkM0IDIyLjYyNzQgOS4zNzI1OCAyOCAxNiAyOFoiIGZpbGw9IndoaXRlIi8+CjwvcGF0aD4KPC9zdmc+Cjwvc3ZnPgo='"
+                            >
+                            <div>
+                                <h3 class="text-xl font-bold text-white mb-1">${coin.name}</h3>
+                                <p class="text-white/70 text-sm font-medium">${coin.symbol?.toUpperCase()}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Stats -->
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-white/70 text-sm">Price (BTC)</span>
+                                <span class="text-white font-mono text-sm">
+                                    ₿${coin.price_btc ? coin.price_btc.toFixed(8) : 'N/A'}
+                                </span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <span class="text-white/70 text-sm">Trend Score</span>
+                                <div class="flex items-center">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                                    <span class="text-green-400 font-bold">${coin.score}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- CoinGecko Link -->
+                        <div class="mt-6 pt-4 border-t border-white/10">
+                            <a 
+                                href="https://www.coingecko.com/en/coins/${coin.id}" 
+                                target="_blank"
+                                class="text-blue-300 hover:text-blue-200 text-sm flex items-center justify-center transition-colors"
+                            >
+                                View on CoinGecko →
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Show error message
+        function showError(message) {
+            const error = document.getElementById('error');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            errorMessage.textContent = message;
+            error.classList.remove('hidden');
+        }
+
+        // Update last updated timestamp
+        function updateLastUpdated() {
+            const lastUpdated = document.getElementById('lastUpdated');
+            const now = new Date();
+            lastUpdated.textContent = `Last updated: ${now.toLocaleString()}`;
+        }
+
+        // Event listeners
+        document.getElementById('refreshBtn').addEventListener('click', fetchTrendingCoins);
+
+        // Auto-refresh every 5 minutes
+        setInterval(fetchTrendingCoins, 5 * 60 * 1000);
+
+        // Initial load
+        fetchTrendingCoins();
+    </script>
 </body>
 </html>
